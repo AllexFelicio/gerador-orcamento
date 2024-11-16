@@ -15,7 +15,6 @@ import {
   Select,
   InputLabel,
   FormControl,
-  Grid,
 } from "@mui/material";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -57,7 +56,7 @@ function App() {
       // Se a quantidade for "-", considera o valor unitário como total
       const total = currentItem.quantity === "-" ? currentItem.value : parseFloat(currentItem.value) * parseFloat(currentItem.quantity);
 
-      setItems([
+      setItems([ 
         ...items,
         { ...currentItem, total: total, quantity: currentItem.quantity === "-" ? "-" : currentItem.quantity },
       ]);
@@ -78,7 +77,7 @@ function App() {
 
   const generatePDF = () => {
     const doc = new jsPDF();
-
+  
     // Se tiver logo, adiciona no PDF
     if (logo) {
       const imgWidth = 60;
@@ -87,39 +86,45 @@ function App() {
       const xPosition = (pageWidth - imgWidth) / 2;
       doc.addImage(logo, "PNG", xPosition, 10, imgWidth, imgHeight);
     }
-
+  
     doc.text("Orçamento", 10, logo ? 50 : 30);
-
+  
     doc.autoTable({
-      head: [["Item", "Quantidade", "Valor Unitário (R$)", "Total (R$)"]],
+      head: [["Item", "Quantidade", "Valor Unitário (R$)", "Total (R$)"]], 
       body: items.map((item) => [
         item.name,
         item.quantity === "-" ? "N/A" : `${item.quantity} ${item.measure}`,
-        item.quantity === "-" ? "-" : `R$ ${parseFloat(item.value).toFixed(2)}`,
-        item.quantity === "-" ? `R$ ${item.value}` : `R$ ${(parseFloat(item.value) * parseFloat(item.quantity)).toFixed(2)}`,
+        item.quantity === "-" ? "-" : parseFloat(item.value).toFixed(2),
+        item.quantity === "-" ? item.value : (parseFloat(item.value) * parseFloat(item.quantity)).toFixed(2),
       ]),
       startY: logo ? 60 : 40,
       theme: "grid",
       headStyles: {
-        fillColor: [0, 51, 102],
-        textColor: [255, 255, 255],
-        fontSize: 12,
-        fontStyle: "bold",
+        fillColor: [0, 51, 102], // Cor de fundo do título das colunas (azul escuro)
+        textColor: [255, 255, 255], // Cor do texto do título das colunas (branco)
+        fontSize: 12, // Tamanho da fonte
+        fontStyle: "bold", // Estilo da fonte
       },
       styles: {
-        fontSize: 10,
-        cellPadding: 5,
-        lineWidth: 0.5,
+        fontSize: 10, // Tamanho da fonte das células
+        cellPadding: 5, // Espaçamento nas células
+        lineWidth: 0.5, // Espessura da linha das bordas
       },
-      margin: { top: 30 },
+      columnStyles: {
+        // Aqui você pode adicionar estilos específicos para cada coluna, se necessário
+      },
+      margin: { top: 30 }, // Distância do topo da página
     });
-
-    doc.text(`Total: R$ ${calculateTotal()}`, 10, doc.lastAutoTable.finalY + 10);
+  
+    // Adiciona o total no final da tabela
+    doc.text(`Total: R$${calculateTotal()}`, 10, doc.lastAutoTable.finalY + 10);
+  
+    // Salva o PDF
     doc.save("orcamento.pdf");
   };
 
   return (
-    <Box sx={{ padding: 4, fontFamily: "Roboto", display: "flex", justifyContent: "center" }}>
+    <Box sx={{ padding: 4, fontFamily: "Roboto", display: "flex", justifyContent: "center", flexDirection: "column", minHeight: "100vh" }}>
       <Box sx={{ width: "100%", maxWidth: "900px" }}>
         <Typography variant="h4" gutterBottom textAlign="center">
           Gerador de Orçamento
@@ -130,58 +135,49 @@ function App() {
           <input type="file" accept="image/*" onChange={handleLogoUpload} />
         </Box>
 
-        <Grid container spacing={2} sx={{ marginBottom: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              label="Item"
-              name="name"
-              variant="outlined"
-              fullWidth
-              value={currentItem.name}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              label={`Quantidade (${currentItem.measure})`}
-              name="quantity"
-              variant="outlined"
-              fullWidth
-              value={currentItem.quantity}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl variant="outlined" fullWidth>
-              <InputLabel>Medida</InputLabel>
-              <Select
-                value={currentItem.measure}
-                onChange={handleMeasureChange}
-                label="Medida"
-              >
-                <MenuItem value="unidade">Unidade</MenuItem>
-                <MenuItem value="m²">m²</MenuItem>
-                <MenuItem value="m³">m³</MenuItem>
-                <MenuItem value="kg">kg</MenuItem>
-                <MenuItem value="litros">Litros</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              label="Valor Unitário (R$)"
-              name="value"
-              type="number"
-              variant="outlined"
-              fullWidth
-              value={currentItem.value}
-              onChange={handleChange}
-            />
-          </Grid>
-        </Grid>
-
-        <Box sx={{ textAlign: "center", marginBottom: 3 }}>
-          <Button variant="contained" color="primary" onClick={addItem} sx={{ height: "56px" }}>
+        <Box sx={{ display: "flex", gap: 2, marginBottom: 3, flexWrap: "wrap" }}>
+          <TextField
+            label="Item"
+            name="name"
+            variant="outlined"
+            value={currentItem.name}
+            onChange={handleChange}
+          />
+          <TextField
+            label={`Quantidade (${currentItem.measure})`}
+            name="quantity"
+            variant="outlined"
+            value={currentItem.quantity}
+            onChange={handleChange}
+          />
+          <FormControl variant="outlined" sx={{ minWidth: 120 }}>
+            <InputLabel>Medida</InputLabel>
+            <Select
+              value={currentItem.measure}
+              onChange={handleMeasureChange}
+              label="Medida"
+            >
+              <MenuItem value="unidade">Unidade</MenuItem>
+              <MenuItem value="m²">m²</MenuItem>
+              <MenuItem value="m³">m³</MenuItem>
+              <MenuItem value="kg">kg</MenuItem>
+              <MenuItem value="litros">Litros</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            label="Valor Unitário"
+            name="value"
+            type="number"
+            variant="outlined"
+            value={currentItem.value}
+            onChange={handleChange}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={addItem}
+            sx={{ height: "56px" }}
+          >
             Adicionar Item
           </Button>
         </Box>
@@ -202,9 +198,9 @@ function App() {
                 <TableRow key={index}>
                   <TableCell>{item.name}</TableCell>
                   <TableCell>{item.quantity === "-" ? "N/A" : `${item.quantity} ${item.measure}`}</TableCell>
-                  <TableCell>{item.quantity === "-" ? "-" : `R$ ${parseFloat(item.value).toFixed(2)}`}</TableCell>
+                  <TableCell>{item.quantity === "-" ? "-" : parseFloat(item.value).toFixed(2)}</TableCell>
                   <TableCell>
-                    {item.quantity === "-" ? `R$ ${item.value}` : `R$ ${(parseFloat(item.value) * parseFloat(item.quantity)).toFixed(2)}`}
+                    {item.quantity === "-" ? item.value : (parseFloat(item.value) * parseFloat(item.quantity)).toFixed(2)}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -223,7 +219,7 @@ function App() {
                     <strong>Total Geral:</strong>
                   </TableCell>
                   <TableCell>
-                    <strong>R$ {calculateTotal()}</strong>
+                    <strong>R${calculateTotal()}</strong>
                   </TableCell>
                 </TableRow>
               )}
@@ -240,6 +236,11 @@ function App() {
           >
             Gerar PDF
           </Button>
+        </Box>
+        <Box sx={{ marginTop: 5, textAlign: "center", fontSize: "14px", color: "gray" }}>
+          <Typography variant="body2">
+            &copy; {new Date().getFullYear()} Todos os direitos reservados. Desenvolvido por <strong>Alex Felício</strong>.
+          </Typography>
         </Box>
       </Box>
     </Box>
